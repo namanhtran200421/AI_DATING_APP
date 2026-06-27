@@ -1,9 +1,11 @@
 import type {Request, Response} from "express";
+
 import {
     loginWithEmail, 
     loginWithOAuth, 
     registerWithEmail,
 } from "./auth_service.js";
+import { findCurrentUserById } from './auth_repository.js';
 
 
 export async function registerController(req:Request, res:Response) {
@@ -95,5 +97,43 @@ export async function oauthLoginController(req:Request, res:Response) {
         return res.status(401).json({
             message: "Oauth Login Failed"
         });
+    }
+}
+
+export async function getCurrentUserController(req: Request,res:Response ) {
+    try {
+        if(!req.user){
+            return res.status(401).json({
+                message: "Unauthorised",
+            });
+        }
+        const user = await findCurrentUserById(req.user.userId);
+        if(!user) {
+            return res.status(404).json({
+                message: "User not found"
+            });
+        }
+        if(user.account_status !== "ACTIVE") {
+            return res.status(403).json({
+                message: "Account is not active"
+            });
+        }
+        return res.status(200).json({
+            success:true, 
+            message:"retrieve successful",
+            user: {
+                userId: user.user_id,
+                email: user.email,
+                accountStatus: user.account_status,
+                role: user.user_role,
+                createdAt: user.created_at,
+                updatedAt: user.updated_at,
+            },
+        });
+    } catch (err:any){
+        return res.status(500).json({
+            message:"Failed to get current user"
+        });
+
     }
 }

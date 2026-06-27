@@ -88,3 +88,11 @@ export async function linkOAuthProviderToExistingUser(
 );
 
 }
+
+export async function findCurrentUserById(userId: number) {
+    const result = await pool.query (
+        'SELECT user_id, email, account_status, user_role, created_at, updated_at FROM users WHERE user_id = $1', [userId]
+    );
+
+    return result.rows[0];
+}
